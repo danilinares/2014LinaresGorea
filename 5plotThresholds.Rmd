@@ -1,0 +1,125 @@
+---
+title: Individual thresholds
+output: 
+  html_document:
+    toc: true
+    toc_depth: 5
+---
+```{r global, echo=FALSE,message=FALSE,results='hide'}
+source('libsAndMore.R')
+opts_chunk$set(echo=FALSE, fig.align='center', fig.width = 10, fig.height = 25)
+```
+
+```{r input, echo=FALSE, message=FALSE, results='hide'}
+fits <- read.table('logdata/fits.txt')
+
+fitsBootExtrDif <- read.table('logdata/fitsBootExtrDif.txt')
+fitsBootExtrDif2 <- read.table('logdata/fitsBootExtrDif2.txt')
+
+fitsBootExtrDifFreq <- read.table('logdata/fitsBootExtrDifFreq.txt')
+fitsBootExtrDif2Freq <- read.table('logdata/fitsBootExtrDif2Freq.txt')
+
+fitsBootExtrDifTf <- read.table('logdata/fitsBootExtrDifTf.txt')
+fitsBootExtrDif2Tf <- read.table('logdata/fitsBootExtrDif2Tf.txt')
+
+fitsBootExtrDifNumber <- read.table('logdata/fitsBootExtrDifNumber.txt')
+fitsBootExtrDifNumber2 <- read.table('logdata/fitsBootExtrDifNumber2.txt')
+
+fitsBootExtrDifNumberFreq <- 
+  read.table('logdata/fitsBootExtrDifNumberFreq.txt')
+fitsBootExtrDifNumber2Freq <- 
+  read.table('logdata/fitsBootExtrDifNumber2Freq.txt')
+
+fitsBootExtrDifNumberTf <- 
+  read.table('logdata/fitsBootExtrDifNumberTf.txt')
+fitsBootExtrDifNumber2Tf <- 
+  read.table('logdata/fitsBootExtrDifNumber2Tf.txt')
+```
+
+#### For number and radius
+```{r thresholds, message=FALSE, warning=FALSE, fig.height = 35}
+plotThresholdsSpeed <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., NULL, NULL, x = 'speed', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'numberradius',p))
+
+plotThresholdsFreq <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., NULL, NULL,x = 'freq', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'numberradius',p))
+
+plotThresholdsTf <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., NULL, NULL, x = 'tf', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'numberradius',p))
+
+plotThresholdsAngle <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., NULL, NULL, x = 'angle', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'numberradius',p))
+
+multiplot(c(plotThresholdsSpeed$plot,
+            plotThresholdsFreq$plot,
+            plotThresholdsTf$plot), cols=3)
+```
+
+#### For radius
+```{r thresholdsRadius, message=FALSE, warning=FALSE}
+plotThresholdsSpeedRadius <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., fitsBootExtrDif, fitsBootExtrDif2, x = 'speed', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'radius',p))
+
+plotThresholdsFreqRadius <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., 
+                          fitsBootExtrDifFreq, fitsBootExtrDif2Freq, 
+                          x = 'freq', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'radius',p))
+
+plotThresholdsTfRadius <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., fitsBootExtrDifTf, fitsBootExtrDif2Tf, x = 'tf', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'radius',p))
+
+plotThresholdsAngleRadius <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., NULL, NULL, x = 'angle', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'radius',p))
+
+multiplot(c(plotThresholdsSpeedRadius$plot,
+            plotThresholdsFreqRadius$plot,
+            plotThresholdsTfRadius$plot),cols=3)
+```
+
+#### For number 
+```{r thresholdsNumber, message=FALSE, warning=FALSE}
+plotThresholdsSpeedNumber <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., fitsBootExtrDifNumber, fitsBootExtrDifNumber2,
+                          x = 'speed', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'number',p))
+
+plotThresholdsFreqNumber <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., 
+                          fitsBootExtrDifNumberFreq, fitsBootExtrDifNumber2Freq, 
+                          x = 'freq', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'number',p))
+
+plotThresholdsTfNumber <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., fitsBootExtrDifNumberTf, fitsBootExtrDifNumberTf, 
+                          x = 'tf', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'number',p))
+
+plotThresholdsAngleNumber <- fits %>% group_by(subject) %>% 
+  do(plot = plotThreshold(., NULL, NULL, x = 'angle', 
+                          y = 'pse', ymin = 'psemin', ymax = 'psemax',
+                          cond = 'number',p))
+
+multiplot(c(plotThresholdsSpeedNumber$plot,
+            plotThresholdsFreqNumber$plot,
+            plotThresholdsTfNumber$plot),cols=3)
+```
+

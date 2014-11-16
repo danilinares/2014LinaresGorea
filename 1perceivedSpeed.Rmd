@@ -1,0 +1,162 @@
+---
+title: Speed matching for each participant
+output: 
+  html_document:
+    toc: true
+    toc_depth: 5
+---
+```{r global, echo=FALSE, message=FALSE,results='hide'}
+source('libsAndMore.R')
+opts_chunk$set(echo=FALSE, fig.align='center', fig.height = 3.5)
+```
+
+```{r input, echo=FALSE, message=FALSE, results='hide'}
+datSpeedMatchRaw <- readfiles(path = 'data', exp = 'SpeedMatch')
+```
+
+#### Number of trials 
+```{r trials, message=FALSE}
+datSpeedMatchRaw %>% group_by(subject, radius, speed, number) %>% 
+  summarise(n=n())
+```
+Participants AD and MP collected a few less responses because they were not available more time. 
+
+#### Checking outliers
+```{r outlayers, message=FALSE}
+plotOutlyersSpeed <- ggplot(datSpeedMatchRaw)+
+  facet_grid(number ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_point(shape = 4, 
+             aes(x = speed, y = response, color = factor(radius))) +
+  scale_x_log10(breaks = 2^(1:5))+scale_y_log10(breaks = 2^(1:5)) +
+  labs(x = p$speedLabel, y = p$speedMatchLabel)
+plotOutlyersSpeed
+
+outliers <- datSpeedMatchRaw %>% filter(response==60 | response==.1)
+```
+I remove `r length(outliers$response)` data points because they corresponded to keypresses without adjustment, that is, they corresponded to the initial values of the matching speed.  
+
+```{r nooutlayers, message=FALSE}
+datSpeedMatch <- setdiff(datSpeedMatchRaw, outliers)
+
+plotNoOutlyersSpeed <- ggplot(datSpeedMatch)+
+  facet_grid(number ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_point(shape = 4, 
+             aes(x = speed, y = response, color = factor(radius))) +
+  scale_x_log10(breaks = 2^(1:5))+scale_y_log10(breaks = 2^(1:5)) +
+  labs(x = p$speedLabel, y = p$speedMatchLabel)
+plotNoOutlyersSpeed
+```
+
+```{r averaging, message=FALSE}
+speedMatch <- datSpeedMatch %>% 
+  group_by(subject, radius, speed, number) %>% 
+  do(bootstrappinggeom(., x = 'response', B = p$B, name = 'speedMatch')) 
+
+speedMatch <- speedMatch %>% 
+  mutate(freq = speed / (2 * pi * radius), tf = freq * number)
+```
+
+#### In terms of `r p$speedLabel` 
+```{r plots, message=FALSE}
+pSpeedMatchSpeedRadius <- ggplot(speedMatch, 
+                 aes(x = speed, y = speedMatch, ymin = speedMatchMin, 
+                     ymax = speedMatchMax, color = factor(radius)))+
+  facet_grid(number ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_pointrange()+geom_line()+
+  scale_x_log10(breaks = 2^(1:5))+scale_y_log10(breaks = 2^(1:5)) +
+  labs(x = p$speedLabel, y = p$speedMatchLabel, color = p$radiusLabel)
+pSpeedMatchSpeedRadius
+
+pSpeedMatchSpeedNumber <- ggplot(speedMatch, 
+                 aes(x = speed, y = speedMatch, ymin = speedMatchMin, 
+                     ymax = speedMatchMax, color = factor(number)))+
+  facet_grid(radius ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_pointrange()+geom_line()+
+  scale_colour_manual(values = c(3,4)) +
+  scale_x_log10(breaks = 2^(1:5))+scale_y_log10(breaks = 2^(1:5)) +
+  labs(x = p$speedLabel, y = p$speedMatchLabel)
+pSpeedMatchSpeedNumber
+```
+
+#### Plotting the differences in terms of `r p$speedLabel` 
+```{r plotFreqDif, message=FALSE}
+speedMatchFig <- speedMatch
+speedMatchFig$speed[speedMatchFig$radius==4] <- 
+  speedMatchFig$speed[speedMatchFig$radius==4] * 1.08
+
+speedMatchFig$numberFig <- speedMatchFig$number
+speedMatchFig$numberFig <- factor(speedMatchFig$numberFig,
+                      levels = c(1, 2),
+                      labels = c(p$oneObjectLabel, p$twoObjectsLabel))
+
+speedMatchFig$radiusFig <- speedMatchFig$radius
+speedMatchFig$radiusFig <- factor(speedMatchFig$radiusFig,
+                      levels = c(2, 4),
+                      labels = c(p$smallRadiusLabel, p$largeRadiusLabel))
+
+speedMatchFig$subjectFig <- paste('Observer',speedMatchFig$subject)
+
+pSpeedMatchSpeedRadiusDif <- ggplot(speedMatchFig, 
+                 aes(x = speed, y = (speedMatch) / speed, 
+                     ymin = (speedMatchMin) / speed, 
+                     ymax = (speedMatchMax) /speed, 
+                     color = factor(radiusFig),
+                     shape = factor(radiusFig)))+
+  facet_grid(numberFig ~ subjectFig)+
+  geom_hline(yintercept = 1, lty = 2,size = p$sizeLine)+
+  geom_point(size = p$sizePointSpeed)+geom_line(size = p$sizeLine)+
+  geom_linerange(size = p$sizeLine, width=.04)+
+  scale_x_log10(breaks = 2^(1:5))+
+  labs(x = p$speedLabel, y = p$normalizedSpeedLabel, color = p$radiusLabel,
+        shape = p$radiusLabel)+
+  theme(panel.grid=element_blank(),
+        legend.key = element_blank())
+pSpeedMatchSpeedRadiusDif
+
+
+speedMatchFigNumber <- speedMatch
+speedMatchFigNumber$speed[speedMatchFigNumber$number==2] <- 
+  speedMatchFigNumber$speed[speedMatchFigNumber$number==2] * 1.08
+
+speedMatchFigNumber$numberFig <- speedMatchFigNumber$number
+speedMatchFigNumber$numberFig <- factor(speedMatchFigNumber$numberFig,
+                      levels = c(1, 2),
+                      labels = c(p$oneObjectLabel, p$twoObjectsLabel))
+
+speedMatchFigNumber$radiusFig <- speedMatchFigNumber$radius
+speedMatchFigNumber$radiusFig <- factor(speedMatchFigNumber$radiusFig,
+                      levels = c(2, 4),
+                      labels = c(p$smallRadiusLabel, p$largeRadiusLabel))
+
+speedMatchFigNumber$subjectFig <- paste('Observer',speedMatchFigNumber$subject)
+
+pSpeedMatchSpeedNumberDif <- ggplot(speedMatchFigNumber, 
+                 aes(x = speed, y = (speedMatch) / speed, 
+                     ymin = (speedMatchMin) / speed, 
+                     ymax = (speedMatchMax) /speed, 
+                     color = factor(numberFig),
+                     shape = factor(numberFig)))+
+  facet_grid(radiusFig ~ subjectFig)+
+  geom_hline(yintercept = 1, lty = 2,size = p$sizeLine)+
+  geom_point(size = p$sizePointSpeed)+geom_line(size = p$sizeLine)+
+  geom_linerange(size = p$sizeLine, width=.04)+
+  scale_color_manual(values = c(3,4)) +
+  scale_x_log10(breaks = 2^(1:5))+
+  labs(x = p$speedLabel, y = p$normalizedSpeedLabel, color = p$numberLabel,
+        shape = p$numberLabel)+
+  theme(panel.grid=element_blank(),
+        legend.key = element_blank())
+
+pSpeedMatchSpeedNumberDif
+
+
+
+```
+
+```{r output}
+write.table(speedMatch,'logdata/speedMatch.txt')
+```

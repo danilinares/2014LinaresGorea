@@ -1,0 +1,231 @@
+---
+title: Frequency matching for each participant
+output: 
+  html_document:
+    toc: true
+    toc_depth: 5
+---
+
+```{r global, echo=FALSE,message=FALSE,results='hide'}
+source('libsAndMore.R')
+opts_chunk$set(echo=FALSE, fig.align='center', fig.height = 3.5)
+```
+
+```{r input, echo=FALSE, message=FALSE, results='hide'}
+datFreqMatchRaw <- readfiles(path = 'data', exp = 'FreqMatch')
+```
+
+#### Number of trials
+```{r numberTrials, message=FALSE}
+datFreqMatchRaw %>% group_by(subject, radius, speed, number) %>% 
+  summarise(n=n())
+```
+
+#### Checking outliers
+```{r outlayers, message=FALSE}
+plotOutliers <- ggplot(datFreqMatchRaw)+
+  facet_grid(number ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_point(shape = 4, 
+             aes(x = speed, y = response, color = factor(radius))) +
+  scale_x_log10(breaks = 2^(1:5))+scale_y_log10(breaks = 2^(1:5)) +
+  labs(x = p$speedLabel, y = p$speedMatchLabel)
+plotOutliers
+
+outlier1 <- datFreqMatchRaw %>% 
+  filter(subject == 'SY', number == 1, response == max(response) )
+
+outlier2 <- datFreqMatchRaw %>% 
+  filter(subject == 'SY', number == 2, response == min(response) )
+```
+For participant SY, the reported speed for `r outlier1$speed` was `r outlier1$response` and the reported speed for `r outlier2$speed` was `r outlier2$response`. These are two clear outlyers. Probably the participant pressed the button to adjust involuntarily. I removed those points. 
+
+```{r nooutlayers, message=FALSE}
+datFreqMatch <- setdiff(datFreqMatchRaw, outlier1)
+datFreqMatch <- setdiff(datFreqMatch, outlier2)
+
+plotNoOutliers <- ggplot(datFreqMatch)+
+  facet_grid(number ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_point(shape = 4, 
+             aes(x = speed, y = response, color = factor(radius))) +
+  scale_x_log10(breaks = 2^(1:5))+scale_y_log10(breaks = 2^(1:5)) +
+  labs(x = p$speedLabel, y = p$speedMatchLabel)
+plotNoOutliers
+```
+
+```{r averaging, message=FALSE}
+freqMatch <- datFreqMatch %>% 
+  group_by(subject, radius, speed, number) %>%
+  do(bootstrappinggeom(., x = 'response',  B = p$B, name = 'speedMatch')) 
+
+freqMatch <- freqMatch %>% 
+  mutate(freq = speed / (2 * pi * radius), 
+         tf = freq * number, 
+         freqMatch = speedMatch /  (2 * pi * 3), 
+         freqMatchMin = speedMatchMin /  (2 * pi * 3), # radius 3 for the prove
+         freqMatchMax = speedMatchMax /  (2 * pi * 3),
+         tfMatch = freqMatch * 1, # 1 object for the prove
+         tfMatchMin = freqMatchMin * 1, 
+         tfMatchMax = freqMatchMax * 1,
+         freqMatchDif = freqMatch - freq,
+         freqMatchMinDif = freqMatchMin - freq,
+         freqMatchMaxDif = freqMatchMax - freq)
+```
+
+#### In terms of `r p$speedLabel` 
+```{r plotSpeed, message=FALSE}
+pFreqMatchSpeedRadius <- ggplot(freqMatch)+
+  facet_grid(number ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_pointrange(data = freqMatch, 
+                  aes(x = speed, y = speedMatch, ymin = speedMatchMin, 
+                      ymax = speedMatchMax, color = factor(radius))) + 
+  geom_line(data = freqMatch, aes(x = speed, y = speedMatch, 
+                                  color = factor(radius))) +
+
+  scale_x_log10(breaks = 2^(1:5))+scale_y_log10(breaks = 2^(1:5)) +
+  labs(x = p$speedLabel, y = p$speedMatchLabel)
+pFreqMatchSpeedRadius
+
+pFreqMatchSpeedNumber <- ggplot(freqMatch, 
+                 aes(x = speed, y = speedMatch, ymin = speedMatchMin, 
+                     ymax = speedMatchMax, color = factor(number)))+
+  facet_grid(radius ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_pointrange()+geom_line()+
+  scale_colour_manual(values=c(3,4)) +
+  scale_x_log10(breaks = 2^(1:5))+scale_y_log10(breaks = 2^(1:5)) +
+  labs(x = p$speedLabel, y = p$speedMatchLabel)
+pFreqMatchSpeedNumber
+```
+
+#### In terms of `r p$freqLabel` 
+
+```{r plotFreq, message=FALSE}
+pFreqMatchFreqRadius <- ggplot(freqMatch, 
+                 aes(x = freq, y = freqMatch, ymin = freqMatchMin, 
+                     ymax = freqMatchMax, color = factor(radius)))+
+  facet_grid(number ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_pointrange()+geom_line()+
+   scale_x_log10(breaks = c(.125,.25,.5,1,2,4))+
+  scale_y_log10(breaks =  c(.125,.25,.5,1,2,4))+
+  labs(x = p$freqLabel, y = p$freqMatchLabel)
+pFreqMatchFreqRadius
+
+pFreqMatchFreqNumber <- ggplot(freqMatch, 
+                 aes(x = freq, y = freqMatch, ymin = freqMatchMin, 
+                     ymax = freqMatchMax, color = factor(number)))+
+  facet_grid(radius ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_pointrange()+geom_line()+
+  scale_colour_manual(values=c(3,4)) +
+  scale_x_log10(breaks = c(.125,.25,.5,1,2,4))+
+  scale_y_log10(breaks =  c(.125,.25,.5,1,2,4))+
+  labs(x = p$freqLabel, y = p$freqMatchLabel)
+pFreqMatchFreqNumber
+```
+
+#### In terms of `r p$tfLabel` 
+
+```{r plotLocalFreq, message=FALSE}
+pFreqMatchTfRadius <- ggplot(freqMatch, 
+                 aes(x = tf, y = tfMatch, ymin = tfMatchMin, 
+                     ymax = tfMatchMax, color = factor(radius)))+
+  facet_grid(number ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_pointrange()+geom_line()+
+   scale_x_log10(breaks = c(.125,.25,.5,1,2,4))+
+  scale_y_log10(breaks =  c(.125,.25,.5,1,2,4))+
+  labs(x = p$tfLabel, y = p$tfMatchLabel)
+pFreqMatchTfRadius
+
+pFreqMatchTfNumber <- ggplot(freqMatch, 
+                 aes(x = tf, y = tfMatch, ymin = tfMatchMin, 
+                     ymax = tfMatchMax, color = factor(number)))+
+  facet_grid(radius ~ subject)+
+  geom_abline(slope = 1, lty = 2)+
+  geom_pointrange()+geom_line()+
+  scale_colour_manual(values=c(3,4)) +
+  scale_x_log10(breaks = c(.125,.25,.5,1,2,4))+
+  scale_y_log10(breaks =  c(.125,.25,.5,1,2,4))+
+  labs(x = p$tfLabel, y = p$tfMatchLabel)
+pFreqMatchTfNumber
+```
+Excepting participant FE, who seems to match speed, the rest of the participants matched frequency.
+
+#### Plotting the normalized perceived frequency 
+```{r plotFreqDif, message=FALSE}
+
+freqMatchFig<- freqMatch
+freqMatchFig$numberFig<- freqMatch$number
+freqMatchFig$numberFig <- factor(freqMatchFig$numberFig,
+                      levels = c(1, 2),
+                      labels = c('1 object', '2 objects'))
+
+freqMatchFig <- freqMatch
+freqMatchFig$numberFig <- freqMatchFig$number
+freqMatchFig$numberFig <- factor(freqMatchFig$numberFig,
+                      levels = c(1, 2),
+                      labels = c(p$oneObjectLabel, p$twoObjectsLabel))
+
+freqMatchFig$radiusFig <- freqMatchFig$radius
+freqMatchFig$radiusFig <- factor(freqMatchFig$radiusFig,
+                      levels = c(2, 4),
+                      labels = c(p$smallRadiusLabel, p$largeRadiusLabel))
+
+freqMatchFig$subjectFig <- paste('Observer',freqMatchFig$subject)
+
+pFreqMatchFreqRadiusDif <- ggplot(freqMatchFig, 
+                 aes(x = freq, y = freqMatch / freq, 
+                     ymin = freqMatchMin / freq, 
+                     ymax = freqMatchMax/ freq, 
+                     color = factor(radiusFig),
+                     shape = factor(radiusFig)))+
+  facet_grid(numberFig ~ subjectFig)+
+  geom_hline(yintercept = 1, lty = 2,size = p$sizeLine)+
+  geom_linerange(size = p$sizeLine, width=.04)+
+  geom_point(size = p$sizePointSpeed)+
+  geom_line(size = p$sizeLine)+
+  scale_y_continuous(breaks=c(1,2),labels=c('1.0','2.0'))+
+  scale_x_log10(breaks = p$breaksFreq, labels = p$breaksFreqLabel)+
+  labs(x = p$freqLabel, y = p$normalizedDifFreqLabel,  color = p$radiusLabel,
+        shape = p$radiusLabel)+
+    theme(panel.grid=element_blank(),
+        legend.key = element_blank())
+pFreqMatchFreqRadiusDif
+
+
+freqMatchFigNumber <- freqMatchFig
+freqMatchFigNumber$freq[freqMatchFigNumber$number==2] <- 
+freqMatchFigNumber$freq[freqMatchFigNumber$number==2] * 1.08
+
+freqMatchFigNumber$subjectFig <- paste('Observer',freqMatchFigNumber$subject)
+
+pFreqMatchFreqNumberDif <- ggplot(freqMatchFigNumber, 
+                 aes(x = freq, y = freqMatch / freq, 
+                     ymin = freqMatchMin / freq, 
+                     ymax = freqMatchMax/ freq, 
+                     color = factor(numberFig),
+                     shape = factor(numberFig)))+
+  facet_grid(radiusFig ~ subjectFig)+
+  geom_hline(yintercept = 1, lty = 2,size = p$sizeLine)+
+  geom_linerange(size = p$sizeLine, width=.04)+
+  geom_point(size = p$sizePointSpeed)+
+  geom_line(size = p$sizeLine)+
+  scale_color_manual(values = c(3,4)) +
+  scale_y_continuous(breaks=c(1,2),labels=c('1.0','2.0'))+
+  scale_x_log10(breaks = p$breaksFreq, labels = p$breaksFreqLabel)+
+  labs(x = p$freqLabel, y = p$normalizedDifFreqLabel,  color = p$numberLabel,
+        shape = p$numberLabel)+
+    theme(panel.grid=element_blank(),
+        legend.key = element_blank())
+pFreqMatchFreqNumberDif
+
+```
+
+
+```{r output}
+write.table(freqMatch,'logdata/freqMatch.txt')
+```
