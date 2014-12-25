@@ -1,0 +1,1 @@
+Data and code to conduct the statistics and produce the figures of the manuscript **Temporal frequency of events rather than speed dilates perceived duration of moving objects.** Linares, D., Gorea. A.
