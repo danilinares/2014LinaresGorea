@@ -6,6 +6,18 @@ fitsBootExtr <- read.table('logdata/fitsBootExtr.txt')
 fitsBootExtrFreq <- read.table('logdata/fitsBootExtrFreq.txt')
 fitsBootExtrTf <- read.table('logdata/fitsBootExtrTf.txt')
 
+fitsExtrAll <- fitsAll %>%
+  group_by(radius, number, durationTest) %>%
+  do(extrapol(., x = 'speed', y = 'pse', xout = c(speeds,speedsExtr)))
+
+fitsExtrAllFreq <- fitsAll %>%
+  group_by(radius, number, durationTest) %>%
+  do(extrapol(., x = 'freq', y = 'pse', xout = freqs))
+
+fitsExtrAllTf <- fitsAll %>%
+  group_by(radius, number, durationTest) %>%
+  do(extrapol(., x = 'tf', y = 'pse', xout = tfs))
+
 ### For speed ####
 difSpeedRadiusAll <- function(prob){
   fitsBootExtr %>%
@@ -90,6 +102,10 @@ fitsBootExtrDifNumberTfAll <- difTfNumberAll(.025)
 fitsBootExtrDifNumber2TfAll <- difTfNumberAll(.005)
 
 ### output ####
+write.table(fitsExtrAll, 'logdata/fitsExtrAll.txt')
+write.table(fitsExtrAllFreq, 'logdata/fitsExtrAllFreq.txt')
+write.table(fitsExtrAllTf, 'logdata/fitsExtrAllTf.txt')
+
 
 write.table(fitsBootExtrDifAll,
             'logdata/fitsBootExtrDifAll.txt')

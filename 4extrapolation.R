@@ -1,6 +1,5 @@
 source('libsAndMore.R')
 
-
 ### inputs ####
 fits <- read.table('logdata/fits.txt')
 fitsBoot <- read.table('logdata/fitsBoot.txt')
@@ -13,6 +12,14 @@ logSpeeds <- log(speeds)
 logSpeedsExtr <- logSpeeds + .5 * first(diff(log(speeds)))
 speedsExtr <- exp(logSpeedsExtr)
 speedsExtr <- head(speedsExtr,-1)
+
+fitsExtr <- fits %>%
+  group_by(subject, radius, number, durationTest) %>%
+  do(extrapol(., x = 'speed', y = 'pse', xout = c(speeds,speedsExtr)))
+
+fitsExtrFreq <- fits %>%
+  group_by(subject, radius, number, durationTest) %>%
+  do(extrapol(., x = 'freq', y = 'pse', xout =freqs))
 
 fitsBootExtr <- fitsBoot %>%
   group_by(subject, radius, number, durationTest,sample) %>%
@@ -111,11 +118,15 @@ speedMatchAll <- rbind_list(speedMatch, freqMatch)
 
 fitsBootspeedMatch <- merge(fitsBoot,speedMatchAll)
 
+fitsExtrSpeedMatch <- merge(fits, speedMatchAll) %>%
+  group_by(subject, radius, number, durationTest) %>%
+  do(extrapolSpeedMatch(., x = 'speedMatch', y = 'pse', dSpeed =speedMatchAll))
 
 fitsBootExtrSpeedMatch <- fitsBootspeedMatch %>%
   group_by(subject, radius, number, durationTest, sample) %>%
   do(extrapolSpeedMatch(., x = 'speedMatch', y = 'psesample', 
                         dSpeed = speedMatchAll ))
+
 
 difSpeedMatchRadius <- function(prob){
   fitsBootExtrSpeedMatch %>%
@@ -153,6 +164,9 @@ fitsBootExtrDifNumber2SpeedMatch <- difSpeedMatchNumber(.005)
 ### For matched frequency ####
 fitsBootfreqMatch <- merge(fitsBoot,freqMatch)
 
+fitsExtrFreqMatch <- merge(fits, fitsMatchFreq) %>%
+  group_by(subject, radius, number, durationTest) %>%
+  do(extrapolSpeedMatch(., x = 'freqMatch', y = 'pse', dSpeed =freqMatch))
 
 fitsBootExtrFreqdMatch <- fitsBootfreqMatch %>%
   group_by(subject, radius, number, durationTest, sample) %>%
@@ -192,25 +206,16 @@ difFreqMatchNumber <- function(prob){
 fitsBootExtrDifNumberFreqMatch <- difFreqMatchNumber(.025)
 fitsBootExtrDifNumber2FreqMatch <- difFreqMatchNumber(.005)
 
-# 
-# ggplot()+
-#   facet_grid(durationTest~radius)+
-#   geom_point(data=filter(fitsBootExtrSpeedMatch,subject=='AD'), size=1,
-#              aes(x=speedMatch,y=psesample,color=factor(number)))+
-#   geom_point(data=filter(fitsMatchSpeed,subject=='AD'), size=4,
-#              aes(x=speedMatch,y=pse,color=factor(number)))+
-#   geom_line(data=filter(fitsMatchSpeed,subject=='AD'), 
-#             aes(x=speedMatch,y=pse,color=factor(number)))+
-#   geom_point(data=filter(fitsBootExtrDifSpeedMatch,subject=='AD'),
-#              aes(x=speedMatch,y=1),color='black')+
-#   scale_x_log10(breaks=c(.1,.2,.4,.8,2,3,4,30))
-
-
 ### output ####
 
 # write.table(fitsBootExtr, 'logdata/fitsBootExtr.txt')
 # write.table(fitsBootExtrFreq, 'logdata/fitsBootExtrFreq.txt')
 # write.table(fitsBootExtrTf, 'logdata/fitsBootExtrTf.txt')
+
+write.table(fitsExtr, 'logdata/fitsExtr.txt')
+write.table(fitsExtrFreq, 'logdata/fitsExtrFreq.txt')
+write.table(fitsExtrSpeedMatch, 'logdata/fitsExtrSpeedMatch.txt')
+write.table(fitsExtrFreqMatch, 'logdata/fitsExtrFreqMatch.txt')
 
 
 write.table(fitsBootExtrDif,

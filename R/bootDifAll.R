@@ -15,7 +15,7 @@ bootdifAll <- function(d, y, sample, prob, onlySigni = FALSE) {
               signi = sign(ymin)*sign(ymax))
   
   if (onlySigni) {
-    d <- d %>% filter(signi ==1)
+    d <- d %>% filter(signi == 1)
   }
   
   names(d)[names(d)=='y'] <- y

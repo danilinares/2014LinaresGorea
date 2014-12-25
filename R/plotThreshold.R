@@ -5,7 +5,7 @@ plotThreshold <- function(d , dDif = NULL, dDif2 = NULL,
   library(ggplot2)
   library(gridExtra)
   library(dplyr)
-  
+
   d$durationTestFig <- d$durationTest
   d$durationTestFig <- factor(d$durationTestFig,
                               levels = c(56, 112),
@@ -28,15 +28,13 @@ plotThreshold <- function(d , dDif = NULL, dDif2 = NULL,
   d$ymin <- d[[ymin]]
   d$ymax <- d[[ymax]]
   
-
-  
-  
   subj <- as.character(unique(d$subject))
   
   if (!is.null(dDif)) {
+
     dDif <- dDif %>% filter(subject == subj)
     dDif$x <- dDif[[x]]
-    
+
     dDif$durationTestFig <- dDif$durationTest
     dDif$durationTestFig <- factor(dDif$durationTestFig,
                                    levels = c(56, 112),
@@ -57,6 +55,7 @@ plotThreshold <- function(d , dDif = NULL, dDif2 = NULL,
   }
   
   if (!is.null(dDif2)) {
+    
     dDif2 <- dDif2 %>% filter(subject == subj)
     dDif2$x <- dDif2[[x]]
     
@@ -140,18 +139,15 @@ plotThreshold <- function(d , dDif = NULL, dDif2 = NULL,
   ylabel <- p$biasLabel
   
   if (all) {
-    ylimits <- c(.7, 1.3)
-    posSigni1 <- 1.25
-    posSigni2 <- posSigni1 + .03
+    ylimits <- c(.7, 1.4)
   }
   else {
-    ylimits <- c(.55, 1.5)
-    posSigni1 <- 1.35
-    posSigni2 <- posSigni1 + .05
+    ylimits <- c(.55, 1.6)
   }
   
   observer <- paste('Obsever',unique(d$subject))
   plot <- ggplot(data=d) + 
+    geom_hline(yintercept = 1, lty = 2,size = p$sizeLine)+
     scale_x_log10(breaks = breaking, labels = breakingLabels) +
     scale_y_continuous(breaks = breakingY, labels = breakingYLabels) +
     coord_cartesian(ylim=ylimits) +
@@ -184,15 +180,29 @@ plotThreshold <- function(d , dDif = NULL, dDif2 = NULL,
       labs(color = p$radiusLabel, fill = p$radiusLabel, shape = p$radiusLabel)
     
     if (!is.null(dDif) & length(dDif$x != 0)) {
+      if (all) {
       plot <- plot + 
-        geom_point(data = dDif, size = p$sizeSigni, y = posSigni1,
-                   aes(x = x), color = 'black',shape='*')
+        geom_point(data = dDif, size = p$sizeSigni, 
+                   aes(x = x, y = pse + .1), color = 'black',shape='*')
+      }
+      else {
+      plot <- plot + 
+        geom_point(data = dDif, size = p$sizeSigni, 
+                   aes(x = x, y = pse + .25), color = 'black',shape='*')       
+      }
     }
     
     if (!is.null(dDif2)& length(dDif2$x != 0)) {
+      if (all) {
       plot <- plot + 
-        geom_point(data = dDif2, size = p$sizeSigni, y = posSigni2,
-                   aes(x = x), color = 'black',shape='*')
+        geom_point(data = dDif2, size = p$sizeSigni, 
+                   aes(x = x, y = pse + .15), color = 'black',shape='*')
+      }
+      else {
+        plot <- plot + 
+          geom_point(data = dDif2, size = p$sizeSigni, 
+                     aes(x = x, y = pse + .3), color = 'black',shape='*')  
+      }
     }
     
  }   
@@ -213,15 +223,29 @@ plotThreshold <- function(d , dDif = NULL, dDif2 = NULL,
       labs(color = p$numberLabel, fill = p$numberLabel, shape = p$numberLabel)
     
     if (!is.null(dDif)) {
+      if (all) {
       plot <- plot + 
-        geom_point(data = dDif, size = p$sizeSigni, y = posSigni1,
-                   aes(x = x), color = 'black',shape='*') 
+        geom_point(data = dDif, size = p$sizeSigni,  
+                   aes(x = x, y = pse + .1), color = 'black',shape='*') 
+      }
+      else {
+        plot <- plot + 
+          geom_point(data = dDif, size = p$sizeSigni,  
+                     aes(x = x, y = pse + .25), color = 'black',shape='*')       
+      }
     }
     
     if (!is.null(dDif2)) {
+      if (all) {
       plot <- plot + 
-        geom_point(data = dDif2, size = p$sizeSigni, y = posSigni2,
-                   aes(x = x), color = 'black',shape='*')
+        geom_point(data = dDif2, size = p$sizeSigni,  
+                   aes(x = x, y = pse + .15), color = 'black',shape='*')
+      }
+      else {
+        plot <- plot + 
+          geom_point(data = dDif2, size = p$sizeSigni,  
+                     aes(x = x, y = pse + .3), color = 'black',shape='*')
+      }
     }
   } 
 

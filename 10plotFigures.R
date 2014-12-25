@@ -1,16 +1,5 @@
 source('libsAndMore.R')
 
-### Figure stimulus ####
-
-# stimulusImage <- arrangeGrob(rasterGrob(readPNG('stimulusFigure.png')))
-# png('figures/stimulusFig.png',
-#     width= p$sizeFig1column,
-#     height= p$sizeFig1column,units='in',res=300)
-# stimulusImage
-# dev.off()
-# 
-# ggsave('figures/stimulusFig.pdf',
-#        width = p$sizeFig1column, height = p$heightFig2)
 
 ### Figure  radius ####
 plotingSpeedFreqAll <- plottingDurAll(plotThresholdsSpeedRadiusAll$plot[[1]],

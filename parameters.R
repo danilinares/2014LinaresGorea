@@ -14,7 +14,7 @@ p <- list(
   
   sizePoint = 1,
   sizePointSpeed = 1.3,
-  sizeLine = .2,
+  sizeLine = .1,
   sizeLineSpeed = .4,
   sizeLineAxis = .2,
   sizeSigni = 2,
