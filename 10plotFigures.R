@@ -1,7 +1,7 @@
 source('libsAndMore.R')
 
 
-### Figure  radius ####
+### Figure  radius #####
 plotingSpeedFreqAll <- plottingDurAll(plotThresholdsSpeedRadiusAll$plot[[1]],
                                       plotThresholdsFreqRadiusAll$plot[[1]], p)
 ggsave('figures/Fig2.pdf', plotingSpeedFreqAll, 
